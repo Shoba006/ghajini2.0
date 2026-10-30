@@ -24,6 +24,12 @@ data/uploads/*
 build/
 .flutter-plugins
 .flutter-plugins-dependencies
+**/android/local.properties
+**/GeneratedPluginRegistrant.*
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/ephemeral/
+**/ios/Runner/GeneratedPluginRegistrant.*
 
 # Environments
 .env

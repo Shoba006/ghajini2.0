@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     TWILIO_ACCOUNT_SID: str = ""
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_FROM_NUMBER: str = ""
-    CAREGIVER_PHONE: str = "+919876543210"
+    CAREGIVER_PHONE: str = "+919123507478"
 
     # LLM Provider Switch (Ollama / OpenRouter Free Tier)
     LLM_PROVIDER: str = "ollama"  # "ollama" | "openrouter"
