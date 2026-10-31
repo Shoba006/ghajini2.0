@@ -60,8 +60,13 @@ class FaceEngine:
             return
 
         try:
-            # buffalo_l is required
-            self.app = FaceAnalysis(name="buffalo_l", providers=["CPUExecutionProvider"])
+            # buffalo_l is required; check workspace models first then default
+            from app.core.config import settings
+            workspace_models = os.path.join(settings.DATA_DIR, "models")
+            if os.path.exists(os.path.join(workspace_models, "buffalo_l")):
+                self.app = FaceAnalysis(name="buffalo_l", root=workspace_models, providers=["CPUExecutionProvider"])
+            else:
+                self.app = FaceAnalysis(name="buffalo_l", providers=["CPUExecutionProvider"])
             self.app.prepare(ctx_id=0, det_size=(640, 640))
             logger.info("InsightFace buffalo_l loaded successfully.")
         except Exception as e:
@@ -79,11 +84,23 @@ class FaceEngine:
         Extracts 512-d L2-normalized embedding and quality score from raw image bytes.
         Returns: (embedding_or_none, quality_score)
         """
-        if cv2 is None or not image_bytes:
+        if not image_bytes:
             return None, 0.0
 
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        img = None
+        if cv2 is not None:
+            nparr = np.frombuffer(image_bytes, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if img is None:
+            try:
+                import io
+                from PIL import Image
+                pil_img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+                img = np.array(pil_img)[:, :, ::-1]  # Convert RGB to BGR
+            except Exception:
+                img = None
+
         if img is None:
             return None, 0.0
 
@@ -107,7 +124,16 @@ class FaceEngine:
 
         # Fallback pseudo-embedding only if InsightFace model is not loaded at all
         # Deterministically hash image data to 512 dimensions for consistency
-        resized = cv2.resize(img, (32, 16)).flatten()
+        if cv2 is not None:
+            resized = cv2.resize(img, (32, 16)).flatten()
+        else:
+            try:
+                import io
+                from PIL import Image
+                pil_img = Image.open(io.BytesIO(image_bytes)).convert("L")
+                resized = np.array(pil_img.resize((32, 16))).flatten()
+            except Exception:
+                resized = img.flatten()[: self.embedding_dim]
         vector = np.zeros(self.embedding_dim, dtype=np.float32)
         vector[: len(resized)] = resized[: self.embedding_dim]
         return self._normalize(vector), 0.75

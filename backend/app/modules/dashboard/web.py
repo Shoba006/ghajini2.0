@@ -862,6 +862,79 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
     .p-btn-sos .patient-btn-title { color: #991B1B; }
     .p-btn-sos .patient-btn-sub { color: #B91C1C; }
 
+    .p-btn-faces { border-color: #8B5CF6; background: #F5F3FF; }
+    .p-btn-faces .patient-btn-title { color: #5B21B6; }
+    .p-btn-faces .patient-btn-sub { color: #6D28D9; }
+
+    /* Face Recognition & People Cards */
+    .face-person-card {
+      background: #FFFFFF;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all 0.15s ease;
+    }
+    .face-person-card:hover {
+      border-color: var(--primary-border);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .face-person-avatar-wrap {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: var(--primary-light);
+      border: 2px solid var(--primary-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .face-person-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .face-person-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .face-person-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-title);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .face-person-rel {
+      font-size: 12.5px;
+      color: var(--primary);
+      font-weight: 600;
+      margin-top: 1px;
+    }
+    .face-person-notes {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+    .face-dropzone:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
     .patient-btn-sub {
       font-size: 13.5px;
       line-height: 1.3;
@@ -1450,6 +1523,10 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
           <span class="nav-icon-label">Memory</span>
         </button>
+        <button class="nav-icon-btn" id="nav-faces" title="Face Recognition" onclick="switchTab('faces')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 3H5a2 2 0 0 0-2 2v4m0 6v4a2 2 0 0 0 2 2h4m6 0h4a2 2 0 0 0 2-2v-4m0-6V5a2 2 0 0 0-2-2h-4"/><circle cx="12" cy="10" r="3"/><path d="M7 19c0-2.5 2.2-4 5-4s5 1.5 5 4"/></svg>
+          <span class="nav-icon-label">Faces</span>
+        </button>
         <button class="nav-icon-btn" id="nav-caregiver" title="Caregiver Profile & Settings" onclick="openCaregiverModal()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
           <span class="nav-icon-label">Caregiver</span>
@@ -1881,7 +1958,12 @@ Rules:
 
           <!-- Emergency Contacts Card -->
           <div class="card">
-            <div class="card-title" style="margin-bottom: 12px;">Emergency Contacts (Priority Ordered)</div>
+            <div class="card-header-clean" style="margin-bottom: 12px;">
+              <div class="card-title">Emergency Contacts (Priority Ordered)</div>
+              <button class="btn-outline" style="height: 30px; font-size: 12px; gap: 6px; cursor: pointer;" onclick="switchTab('faces')" title="Open Face Recognition & Directory">
+                <span>👤</span> Face Directory & Recognition →
+              </button>
+            </div>
             <div style="overflow-x: auto;">
               <table class="clean-table">
                 <thead>
@@ -2105,8 +2187,156 @@ Rules:
     </main>
 
     <!-- ======================================================== -->
-    <!-- PATIENT SIMPLE PORTAL (High Contrast & Elderly Friendly) -->
+    <!-- TAB - FACE RECOGNITION & MEMORY DIRECTORY               -->
     <!-- ======================================================== -->
+    <main id="view-faces" class="content-area" style="display: none;">
+      <!-- Page Header with Back Navigation -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="btn-outline" style="height: 36px; padding: 0 14px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;" onclick="goBackFromFaces()" title="Go Back">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Back
+          </button>
+          <div>
+            <div style="font-size: 20px; font-weight: 700; color: var(--text-title); display: flex; align-items: center; gap: 8px;">
+              <span>👤</span> Face Recognition & Memory Directory
+            </div>
+            <div style="font-size: 12.5px; color: var(--text-muted); margin-top: 2px;">
+              Recognizing family, friends, and caregivers with offline 512-d InsightFace embeddings
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="header-pill" style="color: var(--primary); border-color: var(--primary-border); background: var(--primary-light);">
+            ● FAISS 512-d Active
+          </span>
+          <button class="btn-outline" style="height: 32px; font-size: 12px; cursor: pointer;" onclick="loadRegisteredPeople(true)">
+            🔄 Refresh Directory
+          </button>
+        </div>
+      </div>
+
+      <div class="two-column-grid">
+
+        <!-- LEFT COLUMN: Registered People / Face Directory -->
+        <div class="col-left">
+          <div class="card">
+            <div class="card-header-clean" style="margin-bottom: 14px;">
+              <div>
+                <div class="card-title">Registered Family & Caregivers</div>
+                <div class="card-sub">Family members and caregivers enrolled in local biometric memory</div>
+              </div>
+              <span class="header-pill" id="faces-count-pill" style="color: var(--primary);">3 Registered</span>
+            </div>
+
+            <!-- People Cards Container -->
+            <div id="faces-people-list" style="display: flex; flex-direction: column; gap: 12px;">
+              <div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 13px;">
+                Loading registered people from database...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Interactive Face Recognition Tool -->
+        <div class="col-right">
+          <div class="card">
+            <div class="card-header-clean" style="margin-bottom: 12px;">
+              <div>
+                <div class="card-title">Live Face Recognition Tool</div>
+                <div class="card-sub">Identify visitors in real time via camera scan or photo upload</div>
+              </div>
+              <span class="header-pill" style="color: #6366F1; background: #EEF2FF; border-color: #C7D2FE;">
+                /v1/recognize
+              </span>
+            </div>
+
+            <!-- Input Mode Selector (Camera vs File Upload) -->
+            <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+              <button id="btn-mode-camera" class="btn-teal" style="flex: 1; justify-content: center; height: 34px; font-size: 12.5px; cursor: pointer;" onclick="switchRecMode('camera')">
+                📷 Camera Scanner
+              </button>
+              <button id="btn-mode-file" class="btn-outline" style="flex: 1; justify-content: center; height: 34px; font-size: 12.5px; cursor: pointer;" onclick="switchRecMode('file')">
+                📁 Photo File
+              </button>
+            </div>
+
+            <!-- 1. CAMERA SCANNER SECTION -->
+            <div id="rec-section-camera" style="margin-bottom: 16px;">
+              <div style="position: relative; width: 100%; border-radius: 12px; overflow: hidden; background: #111827; min-height: 200px; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--card-border);">
+                <video id="rec-video" autoplay playsinline style="width: 100%; height: 220px; object-fit: cover; display: none;"></video>
+                <canvas id="rec-canvas" style="display: none;"></canvas>
+
+                <div id="camera-placeholder" style="text-align: center; color: #9CA3AF; padding: 24px;">
+                  <div style="font-size: 38px; margin-bottom: 8px;">📷</div>
+                  <div style="font-size: 13.5px; font-weight: 600; color: #E5E7EB;">Camera Inactive</div>
+                  <div style="font-size: 11.5px; margin-top: 4px; color: #9CA3AF;">Click 'Start Camera' below to scan faces</div>
+                </div>
+              </div>
+
+              <div id="camera-error-banner" style="display: none; margin-top: 10px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #991B1B;">
+                <strong>Camera Notice:</strong> Camera access blocked or unavailable. Please grant permissions or use the <strong>Photo File</strong> tab.
+              </div>
+
+              <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <button id="btn-camera-toggle" class="btn-teal" style="flex: 1; justify-content: center; height: 38px; cursor: pointer;" onclick="toggleCamera()">
+                  📷 Start Camera
+                </button>
+                <button id="btn-camera-snap" class="btn-teal" style="flex: 1; justify-content: center; height: 38px; background: #065F46; display: none; cursor: pointer;" onclick="captureAndRecognize()">
+                  📸 Snap & Recognize Face
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. FILE UPLOAD SECTION -->
+            <div id="rec-section-file" style="display: none; margin-bottom: 16px;">
+              <input type="file" id="face-upload-input" accept="image/*" style="display: none;" onchange="handleFaceFileChosen(event)">
+              <div class="face-dropzone" onclick="document.getElementById('face-upload-input').click()" style="border: 2px dashed #CBD5E1; border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; background: #F8FAFC; transition: all 0.2s;">
+                <div style="font-size: 36px; margin-bottom: 6px;">🖼️</div>
+                <div style="font-size: 13.5px; font-weight: 600; color: var(--text-title);">Choose or Drop a Photo</div>
+                <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 3px;">JPG, PNG, WebP up to 10MB</div>
+              </div>
+
+              <!-- Quick sample test buttons -->
+              <div style="display: flex; gap: 8px; margin-top: 10px;">
+                <button class="btn-outline" style="flex: 1; justify-content: center; font-size: 12px; height: 32px; cursor: pointer;" onclick="testSamplePhoto(4)">
+                  ⚡ Quick Test: Shobamalika
+                </button>
+                <button class="btn-outline" style="flex: 1; justify-content: center; font-size: 12px; height: 32px; cursor: pointer;" onclick="testSamplePhoto(1)">
+                  ⚡ Quick Test: Priya
+                </button>
+              </div>
+            </div>
+
+            <!-- PREVIEW CONTAINER -->
+            <div id="rec-preview-container" style="display: none; margin-bottom: 16px;">
+              <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase;">Image Sent for Recognition</div>
+              <div style="display: flex; align-items: center; gap: 12px; background: #F9FAFB; border: 1px solid var(--card-border); border-radius: 10px; padding: 8px 12px;">
+                <img id="rec-preview-thumb" src="" alt="Snapshot" style="width: 54px; height: 54px; border-radius: 8px; object-fit: cover; border: 1px solid #D1D5DB;">
+                <div style="flex: 1; min-width: 0;">
+                  <div id="rec-preview-meta" style="font-size: 12.5px; font-weight: 600; color: var(--text-title); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Captured Face Image</div>
+                  <div id="rec-preview-sub" style="font-size: 11px; color: var(--text-muted);">Ready for 512-d FAISS similarity matching</div>
+                </div>
+                <button class="btn-outline" style="height: 28px; padding: 0 8px; font-size: 11px; cursor: pointer;" onclick="clearRecPreview()">Clear</button>
+              </div>
+            </div>
+
+            <!-- PROCESSING / LOADING SPINNER -->
+            <div id="rec-loading" style="display: none; padding: 20px; text-align: center; background: #F0FDF4; border: 1.5px solid #BBF7D0; border-radius: 12px; margin-bottom: 16px;">
+              <div class="rec-spinner" style="width: 28px; height: 28px; border: 3px solid #A7F3D0; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 10px;"></div>
+              <div style="font-size: 13.5px; font-weight: 700; color: #065F46;">Detecting Face & Querying Biometrics...</div>
+              <div style="font-size: 11.5px; color: #047857; margin-top: 3px;">Extracting InsightFace vector & querying FAISS index</div>
+            </div>
+
+            <!-- RECOGNITION RESULT BOX -->
+            <div id="rec-result-box" style="display: none; margin-bottom: 12px;"></div>
+
+          </div>
+        </div>
+
+      </div>
+    </main>
     <section id="patient-portal-container">
       <div class="patient-hero-card">
         <img src="data:image/png;base64,__LOGO_B64__" onerror="this.src='/logo.png'" alt="Ghajini Robot Friend" class="patient-hero-logo">
@@ -2155,6 +2385,15 @@ Rules:
           <div class="patient-btn-text">
             <div class="patient-btn-title" id="p-sos-title">Need Help / SOS</div>
             <div class="patient-btn-sub" id="p-sos-sub">Alert family immediately</div>
+          </div>
+        </div>
+
+        <!-- 5. Who is this? (Face Recognition) -->
+        <div class="patient-big-btn p-btn-faces" onclick="openFacesFromPatient()" title="Who is this? (Face Recognition)">
+          <div class="patient-btn-icon">👤</div>
+          <div class="patient-btn-text">
+            <div class="patient-btn-title" id="p-faces-title">Who is this?</div>
+            <div class="patient-btn-sub" id="p-faces-sub">Recognize family, friends & caregivers</div>
           </div>
         </div>
       </div>
@@ -2315,6 +2554,7 @@ Rules:
   <script>
     // State
     let activeTab = 'assistant';
+    let previousTab = 'assistant';
     let activePortal = 'studio';
     let currentLang = 'hi';
     let ecgAnimationId = null;
@@ -2336,8 +2576,14 @@ Rules:
 
     // Tab Switcher
     function switchTab(tabId) {
+      if (activeTab && activeTab !== 'faces') {
+        previousTab = activeTab;
+      }
       activeTab = tabId;
       activePortal = 'studio';
+      if (tabId === 'faces' && previousPortal !== 'patient') {
+        previousPortal = 'studio';
+      }
 
       // Update Tab Bar buttons
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -2350,7 +2596,7 @@ Rules:
       if (activeNav) activeNav.classList.add('active');
 
       // Hide all main studio views and show active one
-      const allViews = ['assistant', 'calls', 'knowledge', 'integrations', 'postcall', 'history'];
+      const allViews = ['assistant', 'calls', 'knowledge', 'integrations', 'postcall', 'history', 'faces'];
       allViews.forEach(id => {
         const el = document.getElementById('view-' + id);
         if (el) el.style.display = (id === tabId) ? 'block' : 'none';
@@ -2365,13 +2611,15 @@ Rules:
 
       if (tabId === 'history') {
         loadRecentCalls();
+      } else if (tabId === 'faces') {
+        loadRegisteredPeople();
       }
     }
 
     // Portal Switcher
     function switchPortal(portal) {
       activePortal = portal;
-      const allViews = ['view-assistant', 'view-calls', 'view-knowledge', 'view-integrations', 'view-postcall', 'view-history'];
+      const allViews = ['view-assistant', 'view-calls', 'view-knowledge', 'view-integrations', 'view-postcall', 'view-history', 'view-faces'];
       const pContainer = document.getElementById('patient-portal-container');
 
       if (portal === 'patient') {
@@ -2407,6 +2655,8 @@ Rules:
         pHeartSub: '74 BPM • Steady & Normal',
         pSOSTitle: 'Need Help / SOS',
         pSOSSub: 'Alert family immediately',
+        pFacesTitle: 'Who is this?',
+        pFacesSub: 'Recognize family, friends & caregivers',
         simGreeting: 'Hello! I am Ghajini, your friend. You are safe at home. How can I help you today?',
         greetingVoice: 'Hello. I am Ghajini, your memory companion. You are safe at home and doing wonderful today.',
         quickChips: [
@@ -2432,6 +2682,8 @@ Rules:
         pHeartSub: '74 BPM • बिल्कुल सामान्य',
         pSOSTitle: 'मदद चाहिए / SOS',
         pSOSSub: 'परिवार को तुरंत संदेश भेजें',
+        pFacesTitle: 'यह कौन है?',
+        pFacesSub: 'परिवार और देखभाल करने वालों को पहचानें',
         simGreeting: 'नमस्ते! मैं गजिनी हूँ, आपका मित्र। आप अपने घर में सुरक्षित हैं। आज मैं आपकी क्या मदद करूँ?',
         greetingVoice: 'नमस्ते। मैं गजिनी हूँ, आपकी देखभाल साथी। आप अपने घर में सुरक्षित हैं।',
         quickChips: [
@@ -2457,6 +2709,8 @@ Rules:
         pHeartSub: '74 BPM • ਬਿਲਕੁਲ ਆਮ',
         pSOSTitle: 'ਮਦਦ ਚਾਹੀਦੀ ਹੈ / SOS',
         pSOSSub: 'ਪਰਿਵਾਰ ਨੂੰ ਤੁਰੰਤ ਸੁਨੇਹਾ ਭੇਜੋ',
+        pFacesTitle: 'ਇਹ ਕੌਣ ਹੈ?',
+        pFacesSub: 'ਪਰਿਵਾਰ ਅਤੇ ਦੇਖਭਾਲ ਕਰਨ ਵਾਲਿਆਂ ਦੀ ਪਛਾਣ ਕਰੋ',
         simGreeting: 'ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਗਜਨੀ ਹਾਂ, ਤੁਹਾਡਾ ਦੋਸਤ। ਤੁਸੀਂ ਆਪਣੇ ਘਰ ਵਿੱਚ ਸੁਰੱਖਿਅਤ ਹੋ। ਅੱਜ ਮੈਂ ਤੁਹਾਡੀ ਕੀ ਮਦਦ ਕਰਾਂ?',
         greetingVoice: 'ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ। ਮੈਂ ਗਜਨੀ ਹਾਂ, ਤੁਹਾਡੀ ਦੇਖਭਾਲ ਸਾਥੀ। ਤੁਸੀਂ ਆਪਣੇ ਘਰ ਵਿੱਚ ਬਿਲਕੁਲ ਸੁਰੱਖਿਅਤ ਹੋ।',
         quickChips: [
@@ -2521,6 +2775,8 @@ Rules:
       const pHeartSub = document.getElementById('p-heart-status-sub');
       const pSOSTitle = document.getElementById('p-sos-title');
       const pSOSSub = document.getElementById('p-sos-sub');
+      const pFacesTitle = document.getElementById('p-faces-title');
+      const pFacesSub = document.getElementById('p-faces-sub');
 
       if (pGreeting) pGreeting.innerText = data.pGreeting;
       if (pSub) pSub.innerText = data.pSub;
@@ -2532,6 +2788,8 @@ Rules:
       if (pHeartSub) pHeartSub.innerText = data.pHeartSub;
       if (pSOSTitle) pSOSTitle.innerText = data.pSOSTitle;
       if (pSOSSub) pSOSSub.innerText = data.pSOSSub;
+      if (pFacesTitle && data.pFacesTitle) pFacesTitle.innerText = data.pFacesTitle;
+      if (pFacesSub && data.pFacesSub) pFacesSub.innerText = data.pFacesSub;
 
       showToast(`Language set to ${data.name}`, 'info');
     }
@@ -2951,6 +3209,412 @@ Rules:
       } catch (e) {
         showToast('SOS error: ' + e, 'error');
       }
+    }
+
+    // ========================================================
+    // FACE RECOGNITION & BIOMETRIC DIRECTORY SYSTEM
+    // ========================================================
+    let previousPortal = 'studio';
+    let cameraStream = null;
+    let selectedFaceBlob = null;
+
+    function openFacesFromPatient() {
+      previousPortal = 'patient';
+      switchTab('faces');
+    }
+
+    function goBackFromFaces() {
+      stopCamera();
+      if (previousPortal === 'patient') {
+        switchPortal('patient');
+      } else {
+        switchTab(previousTab || 'assistant');
+      }
+    }
+
+    function switchRecMode(mode) {
+      const isCam = mode === 'camera';
+      const camSec = document.getElementById('rec-section-camera');
+      const fileSec = document.getElementById('rec-section-file');
+      const btnCam = document.getElementById('btn-mode-camera');
+      const btnFile = document.getElementById('btn-mode-file');
+
+      if (camSec) camSec.style.display = isCam ? 'block' : 'none';
+      if (fileSec) fileSec.style.display = isCam ? 'none' : 'block';
+      if (btnCam) btnCam.className = isCam ? 'btn-teal' : 'btn-outline';
+      if (btnFile) btnFile.className = isCam ? 'btn-outline' : 'btn-teal';
+
+      if (!isCam) {
+        stopCamera();
+      }
+    }
+
+    async function toggleCamera() {
+      const video = document.getElementById('rec-video');
+      const placeholder = document.getElementById('camera-placeholder');
+      const errBanner = document.getElementById('camera-error-banner');
+      const btnToggle = document.getElementById('btn-camera-toggle');
+      const btnSnap = document.getElementById('btn-camera-snap');
+
+      if (cameraStream) {
+        stopCamera();
+        return;
+      }
+
+      if (errBanner) errBanner.style.display = 'none';
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+        });
+        if (video) {
+          video.srcObject = cameraStream;
+          video.style.display = 'block';
+        }
+        if (placeholder) placeholder.style.display = 'none';
+        if (btnToggle) {
+          btnToggle.innerText = '⏹ Stop Camera';
+          btnToggle.className = 'btn-outline';
+        }
+        if (btnSnap) btnSnap.style.display = 'inline-flex';
+        showToast('Camera active. Position face and click Snap.', 'info');
+      } catch (err) {
+        console.error('Camera access error:', err);
+        if (errBanner) {
+          errBanner.style.display = 'block';
+          errBanner.innerHTML = `<strong>Camera Notice:</strong> ${err.message || 'Permission denied or camera device unavailable.'} Please use the <strong>Photo File</strong> tab.`;
+        }
+        showToast('Camera permission denied or camera unavailable', 'error');
+      }
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      const video = document.getElementById('rec-video');
+      const placeholder = document.getElementById('camera-placeholder');
+      const btnToggle = document.getElementById('btn-camera-toggle');
+      const btnSnap = document.getElementById('btn-camera-snap');
+      if (video) video.style.display = 'none';
+      if (placeholder) placeholder.style.display = 'block';
+      if (btnToggle) {
+        btnToggle.innerText = '📷 Start Camera';
+        btnToggle.className = 'btn-teal';
+      }
+      if (btnSnap) btnSnap.style.display = 'none';
+    }
+
+    function captureAndRecognize() {
+      const video = document.getElementById('rec-video');
+      const canvas = document.getElementById('rec-canvas');
+      if (!video || !cameraStream) {
+        showToast('Please start the camera first', 'warning');
+        return;
+      }
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob(blob => {
+        if (!blob) {
+          showToast('Failed to capture frame', 'error');
+          return;
+        }
+        selectedFaceBlob = blob;
+        const previewUrl = URL.createObjectURL(blob);
+        showRecPreview(previewUrl, 'Camera Snapshot (' + canvas.width + 'x' + canvas.height + ')');
+
+        const formData = new FormData();
+        formData.append('image', blob, 'camera_snapshot.jpg');
+        sendRecognitionRequest(formData);
+      }, 'image/jpeg', 0.92);
+    }
+
+    function handleFaceFileChosen(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      selectedFaceBlob = file;
+      const previewUrl = URL.createObjectURL(file);
+      showRecPreview(previewUrl, file.name + ' (' + Math.round(file.size / 1024) + ' KB)');
+
+      const formData = new FormData();
+      formData.append('image', file, file.name);
+      sendRecognitionRequest(formData);
+    }
+
+    async function testSamplePhoto(personId) {
+      try {
+        showToast('Loading sample face photo for testing...', 'info');
+        const res = await fetch(`/v1/people/${personId}/photo`);
+        if (!res.ok) throw new Error('Could not fetch sample photo from server');
+        const blob = await res.blob();
+        selectedFaceBlob = blob;
+        const previewUrl = URL.createObjectURL(blob);
+        showRecPreview(previewUrl, `Sample Photo: Person #${personId}`);
+
+        const formData = new FormData();
+        formData.append('image', blob, `sample_person_${personId}.jpg`);
+        sendRecognitionRequest(formData);
+      } catch (e) {
+        showToast('Sample test error: ' + e.message, 'error');
+      }
+    }
+
+    function showRecPreview(url, meta) {
+      const container = document.getElementById('rec-preview-container');
+      const thumb = document.getElementById('rec-preview-thumb');
+      const metaEl = document.getElementById('rec-preview-meta');
+      if (container && thumb && metaEl) {
+        thumb.src = url;
+        metaEl.innerText = meta;
+        container.style.display = 'block';
+      }
+    }
+
+    function clearRecPreview() {
+      const container = document.getElementById('rec-preview-container');
+      const resultBox = document.getElementById('rec-result-box');
+      if (container) container.style.display = 'none';
+      if (resultBox) resultBox.style.display = 'none';
+      selectedFaceBlob = null;
+    }
+
+    async function sendRecognitionRequest(formData) {
+      const loader = document.getElementById('rec-loading');
+      const resultBox = document.getElementById('rec-result-box');
+      if (loader) loader.style.display = 'block';
+      if (resultBox) resultBox.style.display = 'none';
+
+      try {
+        const response = await fetch('/v1/recognize', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Server returned HTTP ${response.status}: ${errText}`);
+        }
+
+        const data = await response.json();
+        if (loader) loader.style.display = 'none';
+        displayRecognitionResult(data);
+      } catch (err) {
+        console.error('Recognition error:', err);
+        if (loader) loader.style.display = 'none';
+        if (resultBox) {
+          resultBox.style.display = 'block';
+          resultBox.innerHTML = `
+            <div style="background: #FEF2F2; border: 1.5px solid #FECACA; border-radius: 12px; padding: 16px; text-align: center;">
+              <div style="font-size: 26px; margin-bottom: 6px;">⚠️</div>
+              <div style="font-size: 14px; font-weight: 700; color: #991B1B;">Recognition Request Failed</div>
+              <div style="font-size: 12px; color: #B91C1C; margin-top: 4px;">${err.message || 'Unable to connect to recognition backend.'}</div>
+              <button class="btn-outline" style="margin-top: 10px; font-size: 12px; height: 30px;" onclick="clearRecPreview()">Dismiss</button>
+            </div>
+          `;
+        }
+        showToast('Recognition failed: ' + err.message, 'error');
+      }
+    }
+
+    function displayRecognitionResult(data) {
+      const resultBox = document.getElementById('rec-result-box');
+      if (!resultBox) return;
+      resultBox.style.display = 'block';
+
+      const status = data.status;
+      const sim = Math.round((data.similarity || 0) * 100);
+      const person = data.person;
+
+      if (status === 'match' && person) {
+        const photoUrl = `/v1/people/${person.id}/photo`;
+        const initial = person.name ? person.name.charAt(0).toUpperCase() : '👤';
+        const spokenMsg = data.message || `This is ${person.name}, your ${person.relationship}.`;
+
+        resultBox.innerHTML = `
+          <div style="background: #F0FDF4; border: 1.5px solid #86EFAC; border-radius: 12px; padding: 18px; box-shadow: 0 4px 14px rgba(15,157,122,0.08);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+              <span class="header-pill" style="color: #065F46; background: #DCFCE7; border-color: #86EFAC; font-weight: 700;">
+                ✅ Recognized: ${person.name}
+              </span>
+              <span style="font-size: 12px; font-weight: 700; color: #047857;">
+                Similarity: ${sim}%
+              </span>
+            </div>
+
+            <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 12px;">
+              <div style="width: 58px; height: 58px; border-radius: 50%; overflow: hidden; background: #E6F5F1; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: var(--primary); flex-shrink: 0;">
+                <img src="${photoUrl}" alt="${person.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover;">
+                <span style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center;">${initial}</span>
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 17px; font-weight: 800; color: #064E3B;">${person.name}</div>
+                <div style="font-size: 13px; font-weight: 600; color: var(--primary); text-transform: capitalize;">Relationship: ${person.relationship}</div>
+                <div style="font-size: 12px; color: #374151; margin-top: 3px; line-height: 1.4;">${person.notes || ''}</div>
+              </div>
+            </div>
+
+            <div style="background: #FFFFFF; border: 1px solid #BBF7D0; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #166534; margin-bottom: 12px;">
+              "${spokenMsg}"
+            </div>
+
+            <div style="display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;">
+              <button class="btn-outline" style="height: 32px; font-size: 12px;" onclick="speakText('${spokenMsg.replace(/'/g, "\\'")}')">
+                🔊 Speak Out Loud
+              </button>
+              <button class="btn-teal" style="height: 32px; font-size: 12px;" onclick="quickSend('Tell me more about ${person.name}')">
+                💬 Ask Companion About ${person.name}
+              </button>
+            </div>
+          </div>
+        `;
+        speakText(spokenMsg);
+        showToast(`Recognized: ${person.name} (${person.relationship})`, 'success');
+
+      } else if (status === 'uncertain' && person) {
+        const spokenMsg = `This looks like ${person.name}, your ${person.relationship}, but I am not completely certain.`;
+        resultBox.innerHTML = `
+          <div style="background: #FFFBEB; border: 1.5px solid #FDE68A; border-radius: 12px; padding: 18px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+              <span class="header-pill" style="color: #92400E; background: #FEF3C7; border-color: #FCD34D; font-weight: 700;">
+                ⚠️ Possible Match: Looks like ${person.name}
+              </span>
+              <span style="font-size: 12px; font-weight: 600; color: #B45309;">
+                Similarity: ${sim}%
+              </span>
+            </div>
+            <p style="font-size: 13px; color: #78350F; margin-bottom: 12px;">
+              ${data.message || spokenMsg}
+            </p>
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+              <button class="btn-teal" style="height: 32px; font-size: 12px;" onclick="showToast('Confirmed: ${person.name}', 'success')">
+                ✓ Yes, this is ${person.name}
+              </button>
+              <button class="btn-outline" style="height: 32px; font-size: 12px;" onclick="showToast('Noted. We will ask family.', 'info')">
+                ✕ No, ask family
+              </button>
+            </div>
+          </div>
+        `;
+        speakText(spokenMsg);
+        showToast(`Uncertain match: ${person.name}`, 'warning');
+
+      } else if (status === 'no_face') {
+        resultBox.innerHTML = `
+          <div style="background: #FFFBEB; border: 1.5px solid #FDE68A; border-radius: 12px; padding: 16px; text-align: center;">
+            <div style="font-size: 28px; margin-bottom: 6px;">🙂</div>
+            <div style="font-size: 14px; font-weight: 700; color: #92400E;">No Face Detected</div>
+            <div style="font-size: 12px; color: #78350F; margin-top: 4px; line-height: 1.4;">
+              No clear human face was detected in this image. Please ensure the person is facing the camera with good lighting.
+            </div>
+            <button class="btn-outline" style="margin-top: 10px; font-size: 12px; height: 30px;" onclick="clearRecPreview()">Try Another Photo</button>
+          </div>
+        `;
+        showToast('No face detected in photo', 'warning');
+
+      } else {
+        // Unknown person / no match
+        resultBox.innerHTML = `
+          <div style="background: #F9FAFB; border: 1.5px solid #E5E7EB; border-radius: 12px; padding: 18px; text-align: center;">
+            <div style="font-size: 28px; margin-bottom: 6px;">❓</div>
+            <div style="font-size: 15px; font-weight: 700; color: var(--text-title);">Person Not Recognized</div>
+            <div style="font-size: 12.5px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+              This face does not match any registered family member or caregiver in your biometric database.
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: center; margin-top: 14px; flex-wrap: wrap;">
+              <button class="btn-outline" style="height: 34px; font-size: 12.5px;" onclick="clearRecPreview()">
+                🔄 Try Another Angle
+              </button>
+              <button class="btn-teal" style="height: 34px; font-size: 12.5px; background: #DC2626;" onclick="patientTriggerSOS()">
+                🚨 Alert Family About Visitor
+              </button>
+            </div>
+          </div>
+        `;
+        speakText('This person is not in your registered family directory.');
+        showToast('Person not recognized in database', 'info');
+      }
+    }
+
+    async function loadRegisteredPeople(forceToast = false) {
+      const container = document.getElementById('faces-people-list');
+      const countPill = document.getElementById('faces-count-pill');
+      if (!container) return;
+
+      try {
+        const res = await fetch('/v1/people');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const people = await res.json();
+
+        if (countPill) countPill.innerText = `${people.length} Registered`;
+
+        if (!people || people.length === 0) {
+          container.innerHTML = `
+            <div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 13px;">
+              No registered people found. Add contacts in Caregiver Studio.
+            </div>
+          `;
+          return;
+        }
+
+        const colorPalette = ['#0F9D7A', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444'];
+        container.innerHTML = people.map((p, idx) => {
+          const color = colorPalette[idx % colorPalette.length];
+          const initial = p.name ? p.name.charAt(0).toUpperCase() : '?';
+          const facesText = (p.faces_count > 0) ? `✓ ${p.faces_count} Face Active` : 'No face enrolled';
+          const badgeBg = (p.faces_count > 0) ? '#D1FAE5' : '#FEE2E2';
+          const badgeColor = (p.faces_count > 0) ? '#065F46' : '#991B1B';
+          const photoUrl = `/v1/people/${p.id}/photo`;
+
+          return `
+            <div class="face-person-card">
+              <div class="face-person-avatar-wrap" style="border-color: ${color}; color: ${color};">
+                <img class="face-person-avatar-img" src="${photoUrl}" alt="${p.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <span style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: ${color};">${initial}</span>
+              </div>
+              <div class="face-person-info">
+                <div class="face-person-name">
+                  <span>${p.name}</span>
+                  <span class="header-pill" style="font-size: 10.5px; padding: 2px 7px; background: ${badgeBg}; color: ${badgeColor}; border: none;">${facesText}</span>
+                </div>
+                <div class="face-person-rel">
+                  ${p.relationship}${p.phone ? ' &bull; ' + p.phone : ''}
+                </div>
+                <div class="face-person-notes">
+                  ${p.notes || 'No extra notes recorded.'}
+                </div>
+              </div>
+              <div>
+                <button class="btn-outline" style="height: 30px; font-size: 11.5px; padding: 0 10px; cursor: pointer;" onclick="testSamplePhoto(${p.id})" title="Test recognition with ${p.name}">
+                  ⚡ Test
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        if (forceToast) {
+          showToast(`Face Directory updated (${people.length} people)`, 'success');
+        }
+      } catch (err) {
+        console.error('Failed to load registered people:', err);
+        container.innerHTML = `
+          <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 12px; font-size: 12.5px; color: #991B1B;">
+            Failed to load people directory: ${err.message}
+          </div>
+        `;
+      }
+    }
+
+    function speakText(text) {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.85;
+      utterance.lang = (currentLang === 'hi') ? 'hi-IN' : (currentLang === 'pa') ? 'pa-IN' : 'en-IN';
+      window.speechSynthesis.speak(utterance);
     }
 
     // Startup

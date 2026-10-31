@@ -1,12 +1,10 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:ghajini_app/core/responsive.dart';
 import 'package:ghajini_app/core/theme.dart';
@@ -28,7 +26,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Timer? _duePollTimer;
   final Set<int> _activePromptReminderIds = {};
   FlutterLocalNotificationsPlugin? _notificationsPlugin;
-  static const String _emergencyContactNumber = "+919876543210";
 
   @override
   void initState() {
@@ -115,7 +112,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Navigator.of(ctx).pop();
           _activePromptReminderIds.remove(reminder.id);
           try {
-            await ref.read(apiServiceProvider).respondToReminder(reminder.id, 'acknowledged');
+            await ref.read(apiServiceProvider).respondToReminder(reminderId: reminder.id, response: 'acknowledged');
             ref.invalidate(upcomingRemindersProvider);
           } catch (_) {}
         },
@@ -123,7 +120,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Navigator.of(ctx).pop();
           _activePromptReminderIds.remove(reminder.id);
           try {
-            await ref.read(apiServiceProvider).respondToReminder(reminder.id, 'snoozed');
+            await ref.read(apiServiceProvider).respondToReminder(reminderId: reminder.id, response: 'snoozed');
             ref.invalidate(upcomingRemindersProvider);
           } catch (_) {}
         },
@@ -131,7 +128,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Navigator.of(ctx).pop();
           _activePromptReminderIds.remove(reminder.id);
           try {
-            await ref.read(apiServiceProvider).respondToReminder(reminder.id, 'distressed');
+            await ref.read(apiServiceProvider).respondToReminder(reminderId: reminder.id, response: 'distressed');
             _showSOSConfirmedDialog();
           } catch (_) {}
         },
@@ -202,65 +199,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ),
     );
-  }
-    final Uri telUri = Uri(scheme: 'tel', path: _emergencyContactNumber);
-    try {
-      if (await canLaunchUrl(telUri)) {
-        await launchUrl(telUri);
-        return;
-      }
-    } catch (_) {}
-
-    // Web / Desktop Fallback: Dialog with Copy Number
-    if (mounted) {
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text("Emergency Phone Dialer", style: TextStyle(fontFamily: 'serif', fontWeight: FontWeight.bold)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text("Caregiver Contact Number:", style: TextStyle(fontSize: 16)),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: GhajiniTheme.softCream,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: GhajiniTheme.borderLight),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      _emergencyContactNumber,
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: GhajiniTheme.darkBrown),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.copy, color: GhajiniTheme.primaryOrange),
-                      onPressed: () {
-                        Clipboard.setData(const ClipboardData(text: _emergencyContactNumber));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Phone number copied to clipboard.")),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text("CLOSE", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            ),
-          ],
-        ),
-      );
-    }
   }
 
   void _showDemoToolsDialog() {
@@ -352,20 +290,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           if (isWide) ...[
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-              child: SosButton(onPressed: _handleSOS, isHeaderStyle: true),
+              child: CompactSosButton(onPressed: _handleSOS),
             ),
             const SizedBox(width: 8),
           ],
-          IconButton(
-            icon: const Icon(Icons.analytics_outlined, size: 28),
-            tooltip: 'Caregiver Dashboard',
-            onPressed: () => context.push('/dashboard'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.admin_panel_settings_outlined, size: 28),
-            tooltip: 'Caregiver Portal',
-            onPressed: () => context.push('/caregiver'),
-          ),
+          if (ref.watch(currentAppModeProvider) != AppMode.user) ...[
+            IconButton(
+              icon: const Icon(Icons.analytics_outlined, size: 28),
+              tooltip: 'Caregiver Dashboard',
+              onPressed: () => context.push('/dashboard'),
+            ),
+            IconButton(
+              icon: const Icon(Icons.admin_panel_settings_outlined, size: 28),
+              tooltip: 'Caregiver Portal',
+              onPressed: () => context.push('/caregiver'),
+            ),
+          ],
         ],
       ),
       body: SafeArea(
@@ -437,7 +377,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                 // 2. SOS Button (Compact full width; on wide it's also in the header)
                 if (!isWide) ...[
-                  SosButton(onPressed: _handleSOS),
+                  FullWidthSosButton(onPressed: _handleSOS),
                   const SizedBox(height: 16),
                 ],
 

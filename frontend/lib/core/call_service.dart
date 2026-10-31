@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:ghajini_app/core/theme.dart';
+import 'package:ghajini_app/screens/calling_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 enum CallOutcome { placed, openedDialer, copiedNumber, cancelled }
@@ -10,7 +11,27 @@ enum CallOutcome { placed, openedDialer, copiedNumber, cancelled }
 class CallService {
   static final CallService _instance = CallService._internal();
   factory CallService() => _instance;
+  static CallService get instance => _instance;
   CallService._internal();
+
+  /// Initiates emergency or family calling flow
+  Future<void> initiateCallFlow({
+    required BuildContext context,
+    int patientId = 1,
+    required String reason,
+    String source = 'call',
+    String? lang,
+  }) async {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CallingScreen(
+          reason: reason,
+          source: source,
+          patientId: patientId,
+        ),
+      ),
+    );
+  }
 
   /// Cleans phone number string (removes spaces, dashes, brackets)
   static String cleanPhoneNumber(String phone) {
@@ -123,7 +144,7 @@ class CallService {
                 decoration: BoxDecoration(
                   color: GhajiniTheme.softCream,
                   borderRadius: BorderRadius.circular(14),
-                  border: BorderSide(color: GhajiniTheme.borderOrange, width: 1.5),
+                  border: Border.all(color: GhajiniTheme.borderOrange, width: 1.5),
                 ),
                 child: SelectableText(
                   phone,

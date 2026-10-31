@@ -13,6 +13,7 @@ class Reminder {
   final DateTime? lastTriggeredAt;
   final DateTime? nextRunAt;
   final DateTime createdAt;
+  final bool? active;
 
   Reminder({
     required this.id,
@@ -24,12 +25,13 @@ class Reminder {
     this.rrule,
     this.isCritical = false,
     this.escalateAfterMin = 10,
-    required this.status,
-    required this.retryCount,
+    this.status = 'pending',
+    this.retryCount = 0,
     this.lastTriggeredAt,
     this.nextRunAt,
-    required this.createdAt,
-  });
+    DateTime? createdAt,
+    this.active,
+  }) : createdAt = createdAt ?? DateTime.now();
 
   factory Reminder.fromJson(Map<String, dynamic> json) {
     return Reminder(

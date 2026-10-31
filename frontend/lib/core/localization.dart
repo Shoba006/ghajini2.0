@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 enum AppLanguage { en, hi, pa }
 
 class AppStrings {
@@ -31,6 +29,11 @@ class AppStrings {
       AppLanguage.hi: "कुछ भी पूछें",
       AppLanguage.pa: "ਕੁਝ ਵੀ ਪੁੱਛੋ",
     },
+    'askGhajini': {
+      AppLanguage.en: "Ask me anything",
+      AppLanguage.hi: "कुछ भी पूछें",
+      AppLanguage.pa: "ਕੁਝ ਵੀ ਪੁੱਛੋ",
+    },
     'call_family': {
       AppLanguage.en: "Call Family",
       AppLanguage.hi: "परिवार को फोन करें",
@@ -50,6 +53,11 @@ class AppStrings {
       AppLanguage.en: "I am not sure. Shall I call your family?",
       AppLanguage.hi: "मुझे पक्का नहीं पता। क्या मैं आपके परिवार को फोन करूं?",
       AppLanguage.pa: "ਮੈਨੂੰ ਪੱਕਾ ਨਹੀਂ ਪਤਾ। ਕੀ ਮੈਂ ਤੁਹਾਡੇ ਪਰਿਵਾਰ ਨੂੰ ਫ਼ੋਨ ਕਰਾਂ?",
+    },
+    'notSure': {
+      AppLanguage.en: "I am not sure. Shall I call your family?",
+      AppLanguage.hi: "मुझे पक्का नहीं पता। क्या मैं आपके परिवार को फोन करूं?",
+      AppLanguage.pa: "ਮੈਨੂੰ ਪੱਕਾ नहीं पता। ਕੀ ਮੈਂ ਤੁਹਾਡੇ ਪਰਿਵਾਰ ਨੂੰ ਫ਼ੋਨ ਕਰਾਂ?",
     },
     'thinking': {
       AppLanguage.en: "Let me think...",
@@ -73,9 +81,31 @@ class AppStrings {
     },
   };
 
-  static String get(String key) {
+  /// Retrieves localized string. Supports both:
+  /// `AppStrings.get('key')` and `AppStrings.get(langCode, 'key')`
+  static String get(String keyOrLang, [String? optionalKey]) {
+    String key;
+    AppLanguage lang = currentLang;
+
+    if (optionalKey != null) {
+      final code = keyOrLang.toLowerCase();
+      if (code == 'hi') {
+        lang = AppLanguage.hi;
+      } else if (code == 'pa') {
+        lang = AppLanguage.pa;
+      } else {
+        lang = AppLanguage.en;
+      }
+      key = optionalKey;
+    } else {
+      key = keyOrLang;
+    }
+
+    if (key == 'notSure') key = 'not_sure_fallback';
+    if (key == 'askGhajini') key = 'ask_anything';
+
     if (_strings.containsKey(key)) {
-      return _strings[key]![currentLang] ?? _strings[key]![AppLanguage.en]!;
+      return _strings[key]![lang] ?? _strings[key]![AppLanguage.en]!;
     }
     return key;
   }

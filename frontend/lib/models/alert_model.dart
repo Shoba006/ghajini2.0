@@ -6,6 +6,14 @@ class AlertModel {
   final String message;
   final String status;
   final DateTime createdAt;
+  final String? _severity;
+
+  String get severity =>
+      _severity ??
+      (alertType.toLowerCase().contains('critical') ||
+              alertType.toLowerCase().contains('sos')
+          ? 'critical'
+          : alertType);
 
   AlertModel({
     required this.id,
@@ -15,7 +23,8 @@ class AlertModel {
     required this.message,
     required this.status,
     required this.createdAt,
-  });
+    String? severity,
+  }) : _severity = severity;
 
   factory AlertModel.fromJson(Map<String, dynamic> json) {
     return AlertModel(
@@ -25,6 +34,7 @@ class AlertModel {
       alertType: json['alert_type'] as String? ?? 'general',
       message: json['message'] as String? ?? '',
       status: json['status'] as String? ?? 'sent',
+      severity: json['severity'] as String?,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'] as String) ?? DateTime.now()
           : DateTime.now(),

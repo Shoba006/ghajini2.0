@@ -206,7 +206,7 @@ class MongoManager:
                 await asyncio.wait_for(client.admin.command("ping"), timeout=3.0)
                 self._motor_client = client
                 self._connected = True
-                logger.info(f"Connected to MongoDB via Motor at {settings.MONGODB_URL}")
+                logger.info("Connected to MongoDB via Motor")
             except Exception as e:
                 self._connected = False
                 logger.info(f"MongoDB server not reachable ({e}); using AsyncDocumentCollection engine.")

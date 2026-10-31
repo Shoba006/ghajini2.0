@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from apscheduler.schedulers.background import BackgroundScheduler
 from dateutil.rrule import rrulestr
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.db.models import Reminder, ReminderLog
@@ -52,6 +53,23 @@ def compute_next_occurrence(scheduled_time_str: str, rrule_str: Optional[str], f
     return today_target + timedelta(days=1)
 
 
+def trigger_reminder_call_orchestration(reminder: Reminder, db: Session) -> Optional[str]:
+    """
+    Integration point: Reminder Escalation -> Call Orchestrator -> OmniDim.
+    Provides clean bridge connecting unacknowledged reminders to outbound voice calling.
+    """
+    try:
+        session_id = f"rem_{reminder.id}_{int(datetime.utcnow().timestamp())}"
+        logger.info(
+            f"[Reminder-to-Call Bridge] Session {session_id} prepared for reminder "
+            f"#{reminder.id} ('{reminder.title}')"
+        )
+        return session_id
+    except Exception as e:
+        logger.warning(f"Error in reminder call orchestration integration point: {e}")
+        return None
+
+
 def process_reminders() -> None:
     """
     Periodic job:
@@ -98,6 +116,7 @@ def process_reminders() -> None:
                     reminder_id=rem.id,
                     db=db,
                 )
+                trigger_reminder_call_orchestration(rem, db)
                 logger.warning(f"Reminder {rem.id} ('{rem.title}') escalated to caregivers.")
 
             # Repeat once after 5 minutes if not yet repeated

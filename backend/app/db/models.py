@@ -20,6 +20,7 @@ class Patient(Base):
     audit_logs = orm_relationship("AuditLog", back_populates="patient", cascade="all, delete-orphan")
     places = orm_relationship("Place", back_populates="patient", cascade="all, delete-orphan")
     vitals = orm_relationship("VitalsReading", back_populates="patient", cascade="all, delete-orphan")
+    call_attempts = orm_relationship("CallAttempt", back_populates="patient", cascade="all, delete-orphan")
 
 
 class Person(Base):
@@ -169,3 +170,29 @@ class VitalsReading(Base):
     recorded_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     patient = orm_relationship("Patient", back_populates="vitals")
+
+
+class CallAttempt(Base):
+    __tablename__ = "call_attempts"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    call_session_id = Column(String(100), index=True, nullable=False)
+    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, default=1, index=True)
+    person_id = Column(Integer, ForeignKey("people.id", ondelete="CASCADE"), nullable=True, index=True)
+    reminder_id = Column(Integer, ForeignKey("reminders.id", ondelete="SET NULL"), nullable=True, index=True)
+    attempt_number = Column(Integer, default=1, nullable=False)
+    provider = Column(String(50), default="omnidim", nullable=False)
+    provider_call_id = Column(String(120), unique=True, nullable=True, index=True)
+    recipient_phone = Column(String(50), nullable=False)
+    recipient_name = Column(String(120), nullable=True)
+    status = Column(String(50), default="initiated", nullable=False)  # initiated, ringing, answered, no_answer, failed, busy, voicemail, cancelled
+    is_technical_failure = Column(Boolean, default=False, nullable=False)
+    failure_reason = Column(Text, nullable=True)
+    duration_seconds = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    patient = orm_relationship("Patient", back_populates="call_attempts")
+    person = orm_relationship("Person", backref="call_attempts")
+    reminder = orm_relationship("Reminder", backref="call_attempts")
+

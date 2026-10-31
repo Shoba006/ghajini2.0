@@ -23,6 +23,7 @@ from app.modules.dashboard.router import router as dashboard_router
 from app.modules.dashboard.web import get_dashboard_html
 from app.modules.demo.router import router as demo_router
 from app.modules.faces.engine import face_engine
+from app.modules.integrations.router import router as integrations_router
 from app.modules.memory.retrieval import memory_retrieval
 from app.modules.memory.router import router as memory_router
 from app.modules.people.router import router as people_router
@@ -96,7 +97,7 @@ async def lifespan(app: FastAPI):
     # Pre-warm Ollama if not running in pytest or test mode
     if not is_serverless and not os.environ.get("PYTEST_CURRENT_TEST") and not os.environ.get("TESTING"):
         try:
-            await asyncio.wait_for(ollama_client.generate_answer("hello", ["hello"]), timeout=0.5)
+            await asyncio.wait_for(ollama_client.generate_answer("hello", ["hello"]), timeout=5.0)
             logger.info("Ollama LLM warm-up completed successfully.")
         except Exception as e:
             logger.info(f"Ollama warm-up note: {e}")
@@ -254,3 +255,4 @@ app.include_router(companion_router, prefix=f"{v1_prefix}/companion", tags=["com
 app.include_router(calls_router, prefix=f"{v1_prefix}/calls", tags=["calls"])
 app.include_router(cardiolife_router, prefix=f"{v1_prefix}/cardiolife", tags=["cardiolife"])
 app.include_router(demo_router, prefix=f"{v1_prefix}/demo", tags=["demo"])
+app.include_router(integrations_router, prefix=f"{v1_prefix}/integrations", tags=["integrations"])

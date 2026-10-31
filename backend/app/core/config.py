@@ -1,15 +1,19 @@
 import os
 from pathlib import Path
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 os.environ["HF_HUB_OFFLINE"] = os.environ.get("HF_HUB_OFFLINE", "1")
 os.environ["TRANSFORMERS_OFFLINE"] = os.environ.get("TRANSFORMERS_OFFLINE", "1")
 
+# Project / repository root directory (4 levels up from this file: backend/app/core/config.py)
+REPO_ROOT: Path = Path(__file__).resolve().parent.parent.parent.parent
+
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Ghajini 2.0"
     API_V1_STR: str = "/v1"
-    DATABASE_URL: str = "sqlite:///./ghajini.db"
+    DATABASE_URL: str = f"sqlite:///{REPO_ROOT / 'ghajini.db'}"
 
     # Face engine thresholds
     FACE_T_HIGH: float = 0.50
@@ -17,7 +21,7 @@ class Settings(BaseSettings):
 
     # Ollama settings
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "llama3.2:3b"
+    OLLAMA_MODEL: str = "tinyllama:latest"
     OLLAMA_TEMPERATURE: float = 0.2
     OLLAMA_MAX_TOKENS: int = 120
     OLLAMA_TIMEOUT_SECONDS: float = 15.0
@@ -46,6 +50,13 @@ class Settings(BaseSettings):
     # Optional Video Room
     VIDEO_LINK_BASE_URL: str = ""  # e.g. "https://meet.jit.si"
 
+    # OmniDimension (OmniDim) Calling Provider
+    OMNIDIM_API_KEY: str = ""
+    OMNIDIM_BASE_URL: str = "https://omnidim.io/api/v1"
+    OMNIDIM_AGENT_ID: str = ""
+    OMNIDIM_FROM_NUMBER_ID: str = ""
+    OMNIDIM_WEBHOOK_URL: str = ""
+
     # Call Limits
     CALL_MAX_PER_HOUR: int = 3
     CALL_COOLDOWN_SECONDS: int = 120  # 2 minutes
@@ -63,17 +74,41 @@ class Settings(BaseSettings):
     QUIET_HOURS_END: int = 6    # 06:00 AM
 
     # Data directories
-    DATA_DIR: str = "./data"
-    UPLOAD_DIR: str = "./data/uploads"
+    DATA_DIR: str = str(REPO_ROOT / "data")
+    UPLOAD_DIR: str = str(REPO_ROOT / "data" / "uploads")
 
     # Default patient ID for single-patient mode
     DEFAULT_PATIENT_ID: int = 1
 
     model_config = SettingsConfigDict(
-        env_file=[".env", "backend/.env", str(Path(__file__).resolve().parent.parent.parent / ".env")],
+        env_file=[
+            str(REPO_ROOT / ".env"),
+            str(REPO_ROOT / "backend" / ".env"),
+            ".env",
+            "backend/.env",
+        ],
         env_file_encoding="utf-8",
         extra="ignore"
     )
+
+    @model_validator(mode="after")
+    def resolve_relative_paths(self) -> "Settings":
+        """Ensures SQLite and storage paths resolve to project root regardless of working directory."""
+        if self.DATABASE_URL.startswith("sqlite:///"):
+            raw_path = self.DATABASE_URL[len("sqlite:///"):]
+            if not os.path.isabs(raw_path):
+                clean_path = raw_path[2:] if raw_path.startswith("./") else raw_path
+                self.DATABASE_URL = f"sqlite:///{(REPO_ROOT / clean_path).resolve()}"
+
+        if not os.path.isabs(self.DATA_DIR):
+            clean_data = self.DATA_DIR[2:] if self.DATA_DIR.startswith("./") else self.DATA_DIR
+            self.DATA_DIR = str((REPO_ROOT / clean_data).resolve())
+
+        if not os.path.isabs(self.UPLOAD_DIR):
+            clean_upload = self.UPLOAD_DIR[2:] if self.UPLOAD_DIR.startswith("./") else self.UPLOAD_DIR
+            self.UPLOAD_DIR = str((REPO_ROOT / clean_upload).resolve())
+
+        return self
 
     def init_directories(self) -> None:
         try:

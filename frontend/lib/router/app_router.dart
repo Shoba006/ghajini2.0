@@ -17,6 +17,14 @@ final appRouter = GoRouter(
       builder: (context, state) => const HomeScreen(),
     ),
     GoRoute(
+      path: '/user',
+      builder: (context, state) => const HomeScreen(),
+    ),
+    GoRoute(
+      path: '/caretaker',
+      builder: (context, state) => const CaregiverScreen(),
+    ),
+    GoRoute(
       path: '/companion',
       builder: (context, state) => const CompanionScreen(),
     ),

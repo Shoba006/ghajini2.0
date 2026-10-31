@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ghajini_app/core/responsive.dart';
-import 'package:ghajini_app/core/theme.dart';
 
 void main() {
   group('Responsive Breakpoint Tests', () {

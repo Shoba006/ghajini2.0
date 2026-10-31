@@ -8,6 +8,7 @@ class GhajiniTheme {
   static const Color softCream = Color(0xFFFFF4E8);
   static const Color darkBrown = Color(0xFF2B1608);
   static const Color borderLight = Color(0xFFF0C9A4);
+  static const Color borderOrange = Color(0xFFE8650A);
   static const Color cardWhite = Color(0xFFFFFFFF);
   static const Color mutedBrown = Color(0xFF7C5D44);
   static const Color successGreen = Color(0xFF166534);
@@ -117,7 +118,7 @@ class GhajiniTheme {
       ),
 
       // Card Theme with 20dp corners and warm border
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: cardWhite,
         elevation: 2,
         shadowColor: darkBrown.withOpacity(0.08),
@@ -131,7 +132,7 @@ class GhajiniTheme {
       // Buttons (Min 64 dp tall)
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          minimumSize: const Size(double.infinity, primaryButtonHeight),
+          minimumSize: const Size(minTouchTarget, primaryButtonHeight),
           backgroundColor: primaryOrange,
           foregroundColor: Colors.white,
           elevation: 3.0,

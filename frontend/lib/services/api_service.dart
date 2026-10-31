@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:ghajini_app/core/api_client.dart';
 import 'package:ghajini_app/models/alert_model.dart';
+import 'package:ghajini_app/models/call_attempt.dart';
 import 'package:ghajini_app/models/dashboard_summary.dart';
 import 'package:ghajini_app/models/memory.dart';
 import 'package:ghajini_app/models/person.dart';
@@ -320,6 +320,9 @@ class ApiService {
     return res.statusCode == 200;
   }
 
+  /// Alias for wipeAllData
+  Future<bool> wipePatientData({int patientId = 1}) => wipeAllData(patientId: patientId);
+
   /// Patient AI Companion: Send message
   Future<Map<String, dynamic>> sendCompanionMessage({
     required String text,
@@ -584,6 +587,47 @@ class ApiService {
         'scenario': scenario,
         'patient_id': patientId,
       },
+    );
+    return res.data as Map<String, dynamic>;
+  }
+
+  /// OmniDimension Orchestrated Calling:
+  /// Initiates an outbound phone call managed by the backend 3-attempt orchestrator.
+  Future<Map<String, dynamic>> initiateOrchestratedCall({
+    required String reason,
+    int patientId = 1,
+    String source = 'routine',
+    String? callSessionId,
+    int? reminderId,
+    int? contactId,
+  }) async {
+    final res = await _dio.post(
+      '/calls/orchestrated/initiate',
+      data: {
+        'patient_id': patientId,
+        'reason': reason,
+        'source': source,
+        if (callSessionId != null) 'call_session_id': callSessionId,
+        if (reminderId != null) 'reminder_id': reminderId,
+        if (contactId != null) 'contact_id': contactId,
+      },
+    );
+    return res.data as Map<String, dynamic>;
+  }
+
+  /// OmniDimension Orchestrated Calling:
+  /// Returns all call attempts for a call session ID.
+  Future<List<CallAttempt>> getCallAttempts(String callSessionId) async {
+    final res = await _dio.get('/calls/attempts/$callSessionId');
+    final list = res.data as List<dynamic>;
+    return list.map((e) => CallAttempt.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  /// Calling Agent: Clear active cooldown and throttle locks
+  Future<Map<String, dynamic>> resetCallCooldown({int patientId = 1}) async {
+    final res = await _dio.post(
+      '/calls/reset-cooldown',
+      queryParameters: {'patient_id': patientId},
     );
     return res.data as Map<String, dynamic>;
   }

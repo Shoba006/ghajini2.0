@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:ghajini_app/core/localization.dart';
 import 'package:ghajini_app/core/responsive.dart';
 import 'package:ghajini_app/core/theme.dart';
+import 'package:ghajini_app/core/user_theme.dart';
 import 'package:ghajini_app/models/memory.dart';
 import 'package:ghajini_app/providers/app_providers.dart';
 import 'package:ghajini_app/widgets/big_button.dart';
@@ -230,45 +231,57 @@ class _AskScreenState extends ConsumerState<AskScreen> {
     final isWide = Responsive.isWide(context);
 
     return Scaffold(
-      backgroundColor: GhajiniTheme.softCream,
+      backgroundColor: UserTheme.backgroundWhite,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: UserTheme.primaryGreen, size: 26),
+          tooltip: 'Back',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Text(
           AppStrings.get(currentLang, 'askGhajini'),
           style: const TextStyle(
-            fontFamily: 'serif',
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            color: UserTheme.textTitle,
           ),
         ),
-        backgroundColor: GhajiniTheme.primaryOrange,
-        foregroundColor: Colors.white,
-        elevation: 2,
+        backgroundColor: UserTheme.backgroundWhite,
+        foregroundColor: UserTheme.textTitle,
+        elevation: 0,
         actions: [
           // Language selector
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: currentLang,
-                dropdownColor: GhajiniTheme.darkBrown,
-                icon: const Icon(Icons.language, color: Colors.white),
-                style: const TextStyle(
-                  fontSize: 18,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                color: UserTheme.primaryLight,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: UserTheme.primaryBorder),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: currentLang,
+                  dropdownColor: Colors.white,
+                  icon: const Icon(Icons.language, color: UserTheme.primaryGreen),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: UserTheme.primaryGreenDark,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  items: languages.map((lang) {
+                    return DropdownMenuItem<String>(
+                      value: lang['code'],
+                      child: Text(lang['name']!),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      ref.read(currentLanguageProvider.notifier).state = val;
+                    }
+                  },
                 ),
-                items: languages.map((lang) {
-                  return DropdownMenuItem<String>(
-                    value: lang['code'],
-                    child: Text(lang['name']!),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    ref.read(currentLanguageProvider.notifier).state = val;
-                  }
-                },
               ),
             ),
           ),
@@ -293,13 +306,17 @@ class _AskScreenState extends ConsumerState<AskScreen> {
                 // Prompt Header
                 Text(
                   'How can I help you today?',
-                  style: Theme.of(context).textTheme.headlineMedium,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: UserTheme.textTitle,
+                  ),
                 ),
                 const SizedBox(height: 6),
-                Text(
+                const Text(
                   'Tap the big microphone to talk, or write below.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: GhajiniTheme.mutedBrown,
+                  style: TextStyle(
+                    fontSize: 17,
+                    color: UserTheme.textBody,
                   ),
                 ),
                 const SizedBox(height: 28),
@@ -310,6 +327,8 @@ class _AskScreenState extends ConsumerState<AskScreen> {
                     isListening: _isRecording,
                     onTap: _toggleRecording,
                     size: 110,
+                    baseColor: UserTheme.primaryGreen,
+                    activeColor: UserTheme.emergencyRed,
                     label: _isRecording ? 'Listening... Tap to stop' : 'Tap to speak',
                   ),
                 ),
@@ -326,7 +345,7 @@ class _AskScreenState extends ConsumerState<AskScreen> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: _isRecording ? GhajiniTheme.emergencyRed : GhajiniTheme.darkBrown,
+                      color: _isRecording ? UserTheme.emergencyRed : UserTheme.primaryGreenDark,
                     ),
                   ),
                 ),
@@ -425,7 +444,7 @@ class _AskScreenState extends ConsumerState<AskScreen> {
                           hintText: 'e.g., Where does Priya live?',
                           hintStyle: const TextStyle(color: Colors.black38),
                           suffixIcon: IconButton(
-                            icon: const Icon(Icons.send_rounded, color: GhajiniTheme.primaryOrange, size: 32),
+                            icon: const Icon(Icons.send_rounded, color: UserTheme.primaryGreen, size: 32),
                             onPressed: _isLoading ? null : () => _askQuestion(_questionController.text),
                           ),
                         ),
@@ -435,7 +454,7 @@ class _AskScreenState extends ConsumerState<AskScreen> {
                       BigButton(
                         text: 'Ask Ghajini',
                         icon: Icons.search_rounded,
-                        backgroundColor: GhajiniTheme.primaryOrange,
+                        backgroundColor: UserTheme.primaryGreen,
                         textColor: Colors.white,
                         onPressed: _isLoading ? null : () => _askQuestion(_questionController.text),
                       ),
@@ -454,13 +473,13 @@ class _AskScreenState extends ConsumerState<AskScreen> {
                         children: [
                           const CircularProgressIndicator(
                             strokeWidth: 4,
-                            valueColor: AlwaysStoppedAnimation<Color>(GhajiniTheme.primaryOrange),
+                            valueColor: AlwaysStoppedAnimation<Color>(UserTheme.primaryGreen),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'Remembering...',
                             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              color: GhajiniTheme.primaryOrange,
+                              color: UserTheme.primaryGreen,
                             ),
                           ),
                         ],
@@ -584,7 +603,7 @@ class _AskScreenState extends ConsumerState<AskScreen> {
             BigButton(
               text: 'Replay Answer',
               icon: Icons.replay_rounded,
-              backgroundColor: GhajiniTheme.primaryOrange,
+              backgroundColor: UserTheme.primaryGreen,
               textColor: Colors.white,
               onPressed: () => tts.speak(res.answer, lang: lang),
             ),

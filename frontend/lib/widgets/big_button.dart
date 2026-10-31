@@ -9,21 +9,37 @@ class BigButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final Color backgroundColor;
   final Color foregroundColor;
+  final Color? borderColor;
   final double height;
   final bool isOutlined;
   final String? semanticLabel;
 
-  const BigButton({
+  String get text => label;
+
+  BigButton({
     super.key,
-    required this.label,
-    this.icon,
+    String? label,
+    String? text,
+    dynamic icon,
     required this.onPressed,
-    this.backgroundColor = GhajiniTheme.primaryOrange,
-    this.foregroundColor = Colors.white,
+    Color backgroundColor = GhajiniTheme.primaryOrange,
+    Color? color,
+    Color? foregroundColor,
+    Color? textColor,
+    this.borderColor,
     this.height = GhajiniTheme.primaryButtonHeight,
     this.isOutlined = false,
     this.semanticLabel,
-  });
+  })  : label = label ?? text ?? '',
+        backgroundColor = color ?? backgroundColor,
+        foregroundColor = foregroundColor ?? textColor ?? (borderColor != null && (color ?? backgroundColor) == Colors.white ? GhajiniTheme.darkBrown : Colors.white),
+        icon = icon is IconData
+            ? Icon(
+                icon,
+                color: foregroundColor ?? textColor ?? (borderColor != null && (color ?? backgroundColor) == Colors.white ? GhajiniTheme.darkBrown : Colors.white),
+                size: 28,
+              )
+            : (icon as Widget?);
 
   @override
   Widget build(BuildContext context) {
@@ -63,13 +79,13 @@ class BigButton extends StatelessWidget {
         child: SizedBox(
           width: double.infinity,
           height: effectiveHeight,
-          child: isOutlined
+          child: (isOutlined || borderColor != null)
               ? OutlinedButton(
                   onPressed: onPressed,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: foregroundColor,
                     backgroundColor: backgroundColor,
-                    side: BorderSide(color: foregroundColor, width: 2.0),
+                    side: BorderSide(color: borderColor ?? foregroundColor, width: 2.0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(GhajiniTheme.cardRadius),
                     ),

@@ -6,6 +6,8 @@ class VoiceOrb extends StatefulWidget {
   final VoidCallback onTap;
   final double size;
   final String label;
+  final Color? activeColor;
+  final Color? baseColor;
 
   const VoiceOrb({
     super.key,
@@ -13,6 +15,8 @@ class VoiceOrb extends StatefulWidget {
     required this.onTap,
     this.size = 80.0,
     this.label = "Press to speak",
+    this.activeColor,
+    this.baseColor,
   });
 
   @override
@@ -79,13 +83,13 @@ class _VoiceOrbState extends State<VoiceOrb> with SingleTickerProviderStateMixin
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: widget.isListening
-                          ? GhajiniTheme.emergencyRed
-                          : GhajiniTheme.primaryOrange,
+                          ? (widget.activeColor ?? GhajiniTheme.emergencyRed)
+                          : (widget.baseColor ?? GhajiniTheme.primaryOrange),
                       boxShadow: [
                         BoxShadow(
                           color: (widget.isListening
-                                  ? GhajiniTheme.emergencyRed
-                                  : GhajiniTheme.primaryOrange)
+                                  ? (widget.activeColor ?? GhajiniTheme.emergencyRed)
+                                  : (widget.baseColor ?? GhajiniTheme.primaryOrange))
                               .withOpacity(0.35),
                           blurRadius: widget.isListening ? 26 : 14,
                           spreadRadius: widget.isListening ? 4 : 1,

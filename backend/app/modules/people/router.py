@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
@@ -136,6 +137,28 @@ def list_people(
             )
         )
     return results
+
+
+@router.get("/{person_id}/photo")
+def get_person_photo(person_id: int, db: Session = Depends(get_db)):
+    face = (
+        db.query(PersonFace)
+        .filter(PersonFace.person_id == person_id)
+        .order_by(PersonFace.id.desc())
+        .first()
+    )
+    if not face:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Face photo not found")
+
+    file_path = face.file_path
+    if not os.path.exists(file_path):
+        basename = os.path.basename(file_path)
+        file_path = os.path.join(settings.UPLOAD_DIR, basename)
+
+    if os.path.exists(file_path):
+        return FileResponse(file_path, media_type="image/jpeg")
+
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Face photo file not found on disk")
 
 
 @router.put("/{person_id}/emergency", response_model=PersonResponse)

@@ -9,6 +9,8 @@ import 'package:ghajini_app/models/reminder.dart';
 import 'package:ghajini_app/providers/app_providers.dart';
 import 'package:ghajini_app/screens/calling_screen.dart';
 import 'package:ghajini_app/widgets/big_button.dart';
+import 'package:ghajini_app/widgets/call_session_card.dart';
+import 'package:ghajini_app/widgets/patient_profile_card.dart';
 import 'package:ghajini_app/widgets/person_card.dart';
 import 'package:ghajini_app/widgets/reminder_card.dart';
 import 'package:ghajini_app/widgets/section_card.dart';
@@ -179,11 +181,12 @@ class _CaregiverScreenState extends ConsumerState<CaregiverScreen> {
         foregroundColor: Colors.white,
         elevation: 2,
         actions: [
-          IconButton(
-            tooltip: 'Switch to Patient Mode',
-            icon: const Icon(Icons.person_pin, size: 28),
-            onPressed: () => context.go('/'),
-          ),
+          if (ref.watch(currentAppModeProvider) != AppMode.caretaker)
+            IconButton(
+              tooltip: 'Switch to Patient Mode',
+              icon: const Icon(Icons.person_pin, size: 28),
+              onPressed: () => context.go('/'),
+            ),
         ],
       ),
       body: SafeArea(
@@ -205,6 +208,11 @@ class _CaregiverScreenState extends ConsumerState<CaregiverScreen> {
                   icon: Icon(Icons.alarm_outlined),
                   selectedIcon: Icon(Icons.alarm, color: GhajiniTheme.primaryOrange),
                   label: 'Reminders',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.phone_callback_outlined),
+                  selectedIcon: Icon(Icons.phone_callback, color: GhajiniTheme.primaryOrange),
+                  label: 'Calls',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.insights_outlined),
@@ -230,16 +238,18 @@ class _CaregiverScreenState extends ConsumerState<CaregiverScreen> {
   String _getTitleForTab(int index) {
     switch (index) {
       case 0:
-        return 'Caregiver: Family & Friends';
+        return 'Caregiver: Family & Contacts';
       case 1:
         return 'Caregiver: Reminders';
       case 2:
-        return 'Caregiver: Activity Dashboard';
+        return 'Caregiver: Call Schedule & Status';
       case 3:
-        return 'Caregiver: Distress Alerts';
+        return 'Caregiver: Activity Dashboard';
       case 4:
+        return 'Caregiver: Distress Alerts';
+      case 5:
       default:
-        return 'Caregiver: Privacy & Settings';
+        return 'Caregiver: Patient Profile & Settings';
     }
   }
 
@@ -271,6 +281,7 @@ class _CaregiverScreenState extends ConsumerState<CaregiverScreen> {
             destinations: const [
               NavigationRailDestination(icon: Icon(Icons.people_outline), label: Text('People')),
               NavigationRailDestination(icon: Icon(Icons.alarm_outlined), label: Text('Reminders')),
+              NavigationRailDestination(icon: Icon(Icons.phone_callback_outlined), label: Text('Calls')),
               NavigationRailDestination(icon: Icon(Icons.insights_outlined), label: Text('Dashboard')),
               NavigationRailDestination(icon: Icon(Icons.notifications_outlined), label: Text('Alerts')),
               NavigationRailDestination(icon: Icon(Icons.settings_outlined), label: Text('Settings')),
@@ -329,23 +340,25 @@ class _CaregiverScreenState extends ConsumerState<CaregiverScreen> {
                     children: [
                       _buildDrawerItem(0, Icons.people, 'Family & Contacts'),
                       _buildDrawerItem(1, Icons.alarm, 'Daily Reminders'),
-                      _buildDrawerItem(2, Icons.insights, 'Dashboard & Metrics'),
-                      _buildDrawerItem(3, Icons.notifications_active, 'Safety Alerts'),
-                      _buildDrawerItem(4, Icons.privacy_tip, 'Privacy & Settings'),
+                      _buildDrawerItem(2, Icons.phone_callback, 'Call Schedule & Status'),
+                      _buildDrawerItem(3, Icons.insights, 'Dashboard & Metrics'),
+                      _buildDrawerItem(4, Icons.notifications_active, 'Safety Alerts'),
+                      _buildDrawerItem(5, Icons.account_circle, 'Patient & Settings'),
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: BigButton(
-                    text: 'Patient Mode',
-                    icon: Icons.person_pin,
-                    backgroundColor: GhajiniTheme.softCream,
-                    textColor: GhajiniTheme.darkBrown,
-                    borderColor: GhajiniTheme.borderLight,
-                    onPressed: () => context.go('/'),
+                if (ref.watch(currentAppModeProvider) != AppMode.caretaker)
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: BigButton(
+                      text: 'Patient Mode',
+                      icon: Icons.person_pin,
+                      backgroundColor: GhajiniTheme.softCream,
+                      textColor: GhajiniTheme.darkBrown,
+                      borderColor: GhajiniTheme.borderLight,
+                      onPressed: () => context.go('/'),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -368,21 +381,24 @@ class _CaregiverScreenState extends ConsumerState<CaregiverScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: isSelected ? GhajiniTheme.softCream : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border: isSelected ? Border.all(color: GhajiniTheme.borderLight) : null,
       ),
-      child: ListTile(
-        leading: Icon(icon, color: isSelected ? GhajiniTheme.primaryOrange : GhajiniTheme.mutedBrown),
-        title: Text(
-          label,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? GhajiniTheme.primaryOrange : GhajiniTheme.darkBrown,
+      child: Material(
+        color: isSelected ? GhajiniTheme.softCream : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: ListTile(
+          leading: Icon(icon, color: isSelected ? GhajiniTheme.primaryOrange : GhajiniTheme.mutedBrown),
+          title: Text(
+            label,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: isSelected ? GhajiniTheme.primaryOrange : GhajiniTheme.darkBrown,
+            ),
           ),
+          onTap: () => setState(() => _currentIndex = index),
         ),
-        onTap: () => setState(() => _currentIndex = index),
       ),
     );
   }
@@ -394,10 +410,12 @@ class _CaregiverScreenState extends ConsumerState<CaregiverScreen> {
       case 1:
         return _buildRemindersTab(context);
       case 2:
-        return _buildDashboardTab(context, screenType);
+        return _buildCallsTab(context);
       case 3:
-        return _buildAlertsTab(context);
+        return _buildDashboardTab(context, screenType);
       case 4:
+        return _buildAlertsTab(context);
+      case 5:
       default:
         return _buildSettingsTab(context);
     }
@@ -598,7 +616,194 @@ class _CaregiverScreenState extends ConsumerState<CaregiverScreen> {
     );
   }
 
-  // 3. Dashboard Tab (2-column on wide screens)
+  // 3. Calls & 3-Attempt Status Tab
+  Widget _buildCallsTab(BuildContext context) {
+    final callsAsync = ref.watch(callHistoryProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Tab Header & Refresh
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Call Schedule & Status',
+                    style: TextStyle(
+                      fontFamily: 'serif',
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: GhajiniTheme.darkBrown,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Recent reminder calls, 3-attempt escalation status, and recipient timeline.',
+                    style: TextStyle(fontSize: 16, color: GhajiniTheme.mutedBrown),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh, color: GhajiniTheme.primaryOrange, size: 28),
+              tooltip: 'Refresh Call History',
+              onPressed: () => ref.invalidate(callHistoryProvider),
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+
+        // Live status stream
+        callsAsync.when(
+          data: (calls) {
+            if (calls.isEmpty) {
+              return SectionCard(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: GhajiniTheme.softCream,
+                        ),
+                        child: const Icon(Icons.phone_missed_outlined, size: 36, color: GhajiniTheme.mutedBrown),
+                      ),
+                      const SizedBox(height: 14),
+                      const Text(
+                        'No recent call records found',
+                        style: TextStyle(
+                          fontFamily: 'serif',
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: GhajiniTheme.darkBrown,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Scheduled reminder calls and automated caretaker escalations will appear here.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 16, color: GhajiniTheme.mutedBrown),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            // Summary metrics
+            final int totalCalls = calls.length;
+            final int completedCalls = calls.where((c) {
+              final s = (c['status'] as String? ?? '').toLowerCase();
+              return s == 'completed' || s == 'answered';
+            }).length;
+            final int escalatedCalls = calls.where((c) {
+              final s = (c['status'] as String? ?? '').toLowerCase();
+              final att = (c['attempt_number'] as num?)?.toInt() ?? 1;
+              return s == 'escalated' || (s == 'no_answer' && att >= 3);
+            }).length;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Quick Summary Metric Pills
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: GhajiniTheme.cardWhite,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: GhajiniTheme.borderLight),
+                        ),
+                        child: Column(
+                          children: [
+                            Text('$totalCalls', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: GhajiniTheme.darkBrown)),
+                            const SizedBox(height: 2),
+                            const Text('Total Calls', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: GhajiniTheme.mutedBrown)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: GhajiniTheme.cardWhite,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: GhajiniTheme.successGreen.withValues(alpha: 0.3)),
+                        ),
+                        child: Column(
+                          children: [
+                            Text('$completedCalls', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: GhajiniTheme.successGreen)),
+                            const SizedBox(height: 2),
+                            const Text('Completed', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: GhajiniTheme.successGreen)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: GhajiniTheme.cardWhite,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: GhajiniTheme.emergencyRed.withValues(alpha: 0.3)),
+                        ),
+                        child: Column(
+                          children: [
+                            Text('$escalatedCalls', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: GhajiniTheme.emergencyRed)),
+                            const SizedBox(height: 2),
+                            const Text('Escalated (3x)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: GhajiniTheme.emergencyRed)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Call Cards List
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: calls.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 14),
+                  itemBuilder: (ctx, index) {
+                    final call = calls[index] as Map<String, dynamic>;
+                    return CallSessionCard(callData: call);
+                  },
+                ),
+              ],
+            );
+          },
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(48),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          error: (err, _) => SectionCard(
+            child: Text(
+              'Error loading call records: $err',
+              style: const TextStyle(fontSize: 18, color: GhajiniTheme.emergencyRed),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 4. Dashboard Tab (2-column on wide screens)
   Widget _buildDashboardTab(BuildContext context, ScreenType screenType) {
     final summaryAsync = ref.watch(dashboardSummaryProvider);
     final dailyAsync = ref.watch(dailySummaryProvider);
@@ -959,25 +1164,28 @@ class _CaregiverScreenState extends ConsumerState<CaregiverScreen> {
     );
   }
 
-  // 5. Settings / Calling Agent & Privacy Tab
+  // 5. Settings / Patient Profile & Privacy Tab
   Widget _buildSettingsTab(BuildContext context) {
     final peopleAsync = ref.watch(peopleListProvider);
     final selectedLang = ref.watch(languageProvider);
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
           const Text(
-            'Emergency Contacts & Calling Agent',
+            'Patient Profile & Settings',
             style: TextStyle(fontFamily: 'serif', fontSize: 26, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           const Text(
-            'Configure prioritized contacts, automated SIM dialing, and free Telegram caregiver briefings.',
+            'Patient medical identification, emergency contacts, companion preferences, and safety controls.',
             style: TextStyle(fontSize: 16, color: GhajiniTheme.mutedBrown),
           ),
           const SizedBox(height: 16),
+
+          // 0. Dedicated Patient Profile & Care Information
+          const PatientProfileCard(),
+          const SizedBox(height: 20),
 
           // 1. Emergency Contacts Priority List
           SectionCard(
@@ -1232,8 +1440,7 @@ class _CaregiverScreenState extends ConsumerState<CaregiverScreen> {
           ),
           const SizedBox(height: 40),
         ],
-      ),
-    );
+      );
   }
 
   void _showEditEmergencyDialog(Person person) {

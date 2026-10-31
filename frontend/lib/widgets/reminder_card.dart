@@ -6,20 +6,26 @@ class ReminderCard extends StatelessWidget {
   final String title;
   final String? message;
   final String scheduledTime;
+  final String? frequency;
   final bool isCritical;
   final String status;
   final VoidCallback? onAcknowledge;
   final VoidCallback? onSnooze;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const ReminderCard({
     super.key,
     required this.title,
     this.message,
     required this.scheduledTime,
+    this.frequency,
     this.isCritical = false,
     this.status = "pending",
     this.onAcknowledge,
     this.onSnooze,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
@@ -106,6 +112,33 @@ class ReminderCard extends StatelessWidget {
                     color: GhajiniTheme.mutedBrown,
                     height: 1.4,
                   ),
+                ),
+              ],
+
+              if (onEdit != null || onDelete != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (frequency != null)
+                      Text(
+                        'Freq: $frequency',
+                        style: const TextStyle(fontSize: 14, color: GhajiniTheme.mutedBrown, fontStyle: FontStyle.italic),
+                      ),
+                    const Spacer(),
+                    if (onEdit != null)
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: GhajiniTheme.primaryOrange),
+                        onPressed: onEdit,
+                        tooltip: 'Edit reminder',
+                      ),
+                    if (onDelete != null)
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: GhajiniTheme.emergencyRed),
+                        onPressed: onDelete,
+                        tooltip: 'Delete reminder',
+                      ),
+                  ],
                 ),
               ],
 

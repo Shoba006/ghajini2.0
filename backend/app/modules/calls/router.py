@@ -7,9 +7,10 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.db.models import Alert, AuditLog, Patient, Person, Reminder
+from app.db.models import Alert, AuditLog, CallAttempt, Patient, Person, Reminder
 from app.db.mongo import mongo_manager
 from app.db.session import get_db
+from app.modules.calls.orchestrator import call_orchestrator
 from app.modules.calls.policy import check_call_policy
 from app.modules.calls.telegram import send_telegram_briefing
 from app.modules.llm.provider import generate_call_wording
@@ -74,6 +75,28 @@ class TestAlertPayload(BaseModel):
     bot_token: Optional[str] = None
     chat_id: Optional[str] = None
     lang: Optional[str] = "en"
+
+
+class OmniDimWebhookPayload(BaseModel):
+    call_id: Optional[str] = None
+    id: Optional[str] = None
+    status: str
+    duration_seconds: Optional[int] = 0
+    error: Optional[str] = None
+    failure_reason: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+    call_context: Optional[Dict[str, Any]] = None
+
+    model_config = ConfigDict(extra="allow")
+
+
+class OrchestratedCallRequest(BaseModel):
+    patient_id: Optional[int] = 1
+    reason: str
+    source: Optional[str] = "routine"
+    call_session_id: Optional[str] = None
+    reminder_id: Optional[int] = None
+    contact_id: Optional[int] = None
 
 
 # -------------------------------------------------------------
@@ -416,3 +439,81 @@ async def reset_cooldown(
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+# -------------------------------------------------------------
+# OmniDimension Orchestrated Call Endpoints
+# -------------------------------------------------------------
+@router.post("/webhook/omnidim")
+async def omnidim_webhook_callback(
+    payload: OmniDimWebhookPayload,
+    db: Session = Depends(get_db),
+):
+    """
+    Receives post-call status webhook from OmniDimension.
+    Updates call state, manages 3-attempt lifecycle, and triggers caretaker escalation if needed.
+    """
+    call_id = payload.call_id or payload.id or (payload.metadata.get("call_id") if payload.metadata else None) or ""
+    result = await call_orchestrator.handle_call_result(
+        provider_call_id=call_id,
+        provider_status=payload.status,
+        raw_payload=payload.model_dump(),
+        duration_seconds=payload.duration_seconds or 0,
+        failure_reason=payload.failure_reason or payload.error,
+        db=db,
+    )
+    return {"status": "success", "result": result}
+
+
+@router.post("/orchestrated/initiate")
+async def initiate_orchestrated_call(
+    payload: OrchestratedCallRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Initiates an outbound phone call managed by the backend 3-attempt orchestrator via OmniDim.
+    """
+    result = await call_orchestrator.initiate_call(
+        patient_id=payload.patient_id or settings.DEFAULT_PATIENT_ID,
+        reason=payload.reason,
+        source=payload.source or "routine",
+        call_session_id=payload.call_session_id,
+        reminder_id=payload.reminder_id,
+        contact_id=payload.contact_id,
+        db=db,
+    )
+    return result.to_dict()
+
+
+@router.get("/attempts/{call_session_id}")
+async def get_call_session_attempts(
+    call_session_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Returns all call attempts associated with a call session ID.
+    """
+    attempts = (
+        db.query(CallAttempt)
+        .filter(CallAttempt.call_session_id == call_session_id)
+        .order_by(CallAttempt.attempt_number.asc())
+        .all()
+    )
+    return [
+        {
+            "id": att.id,
+            "call_session_id": att.call_session_id,
+            "attempt_number": att.attempt_number,
+            "provider": att.provider,
+            "provider_call_id": att.provider_call_id,
+            "recipient_name": att.recipient_name,
+            "recipient_phone": att.recipient_phone,
+            "status": att.status,
+            "is_technical_failure": att.is_technical_failure,
+            "failure_reason": att.failure_reason,
+            "duration_seconds": att.duration_seconds,
+            "created_at": att.created_at.isoformat() if att.created_at else None,
+            "updated_at": att.updated_at.isoformat() if att.updated_at else None,
+        }
+        for att in attempts
+    ]

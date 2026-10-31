@@ -7,6 +7,7 @@ class SectionCard extends StatelessWidget {
   final Widget? trailing;
   final EdgeInsetsGeometry padding;
   final Color backgroundColor;
+  final Color? borderColor;
 
   const SectionCard({
     super.key,
@@ -15,6 +16,7 @@ class SectionCard extends StatelessWidget {
     this.trailing,
     this.padding = const EdgeInsets.all(22),
     this.backgroundColor = GhajiniTheme.cardWhite,
+    this.borderColor,
   });
 
   @override
@@ -23,10 +25,13 @@ class SectionCard extends StatelessWidget {
       color: backgroundColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(GhajiniTheme.cardRadius),
-        side: const BorderSide(color: GhajiniTheme.borderLight, width: 1.5),
+        side: BorderSide(
+          color: borderColor ?? GhajiniTheme.borderLight,
+          width: 1.5,
+        ),
       ),
       elevation: 2,
-      shadowColor: GhajiniTheme.darkBrown.withOpacity(0.06),
+      shadowColor: GhajiniTheme.darkBrown.withValues(alpha: 0.06),
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: Padding(
         padding: padding,

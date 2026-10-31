@@ -42,7 +42,6 @@ class _CallingScreenState extends ConsumerState<CallingScreen> with SingleTicker
   Map<String, dynamic>? _nextContact;
   bool _hasNextContact = false;
   String _patientMessage = "I am calling your family. Please stay right here.";
-  String _caregiverBriefing = "";
   String _blockReason = "";
   int _countdownSeconds = 5;
   Timer? _countdownTimer;
@@ -99,7 +98,6 @@ class _CallingScreenState extends ConsumerState<CallingScreen> with SingleTicker
       final nextContactData = res['next_contact'] as Map<String, dynamic>?;
       final hasNext = res['has_next_contact'] as bool? ?? false;
       final patientMsg = res['patient_message'] as String? ?? "I am calling family for you. Please stay here.";
-      final briefing = res['caregiver_briefing'] as String? ?? "";
 
       if (mounted) {
         setState(() {
@@ -108,7 +106,6 @@ class _CallingScreenState extends ConsumerState<CallingScreen> with SingleTicker
           _nextContact = nextContactData;
           _hasNextContact = hasNext;
           _patientMessage = patientMsg;
-          _caregiverBriefing = briefing;
           _step = CallingStep.calling;
         });
 
